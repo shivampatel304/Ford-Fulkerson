@@ -113,7 +113,7 @@ public class SourceSinkGraphGenerator {
     }
 
     public static int findLongestAcyclicPath(int n, Set<Edge> E, int source) {
-        List<Integer>[] adjacencyList = new List[n];
+        ArrayList<Integer>[] adjacencyList = new ArrayList[n];
         for (int i = 0; i < n; i++) {
             adjacencyList[i] = new ArrayList<>();
         }
