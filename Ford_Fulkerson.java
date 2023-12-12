@@ -2,7 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 public class Ford_Fulkerson {
 
@@ -94,7 +94,7 @@ public class Ford_Fulkerson {
         int totalPathLength = 0;
         int maxLength = -1;
 
-        while(SAP.dijkstra_SAP(rGraph,s,t,parent)){
+        while(dijkstra_SAP(rGraph,s,t,parent)){
             int pathLength = 0;
             int path_flow = Integer.MAX_VALUE;
             for(v=t; v!=s; v = parent[v]){
@@ -145,7 +145,7 @@ public class Ford_Fulkerson {
         int totalPathLength = 0;
         int maxLength = -1;
 
-        while(DFS_Like.dijkstra_DFS(rGraph,s,t,parent)){
+        while(dijkstra_DFS(rGraph,s,t,parent)){
             int pathLength = 0;
             int path_flow = Integer.MAX_VALUE;
             for(v=t; v!=s; v = parent[v]){
@@ -195,7 +195,7 @@ public class Ford_Fulkerson {
         int totalPathLength = 0;
         int maxLength = -1;
 
-        while(RandomDFS.dijkstra_RandomDFS(rGraph,s,t,parent)){
+        while(dijkstra_RandomDFS(rGraph,s,t,parent)){
             int pathLength = 0;
             int path_flow = Integer.MAX_VALUE;
             for(v=t; v!=s; v = parent[v]){
@@ -245,7 +245,7 @@ public class Ford_Fulkerson {
         int totalPathLength = 0;
         int maxLength = -1;
 
-        while(MaxCapacityDijkstra.dijkstra_MaxCapacity(rGraph,s,t,parent)){
+        while(dijkstra_MaxCapacity(rGraph,s,t,parent)){
             int pathLength = 0;
             int path_flow = Integer.MAX_VALUE;
             for(v=t; v!=s; v = parent[v]){
@@ -311,6 +311,149 @@ public class Ford_Fulkerson {
         return false;
     }
 
+    public static boolean dijkstra_SAP(int[][] graph, int sourceNode, int sinkNode, int[] parent) {
+        int[] dist = new int[graph.length];  // Use graph.length instead of V
+        Arrays.fill(dist, Integer.MAX_VALUE);
+
+        PriorityQueue<Vertex> queue = new PriorityQueue<>();
+        queue.add(new Vertex(sourceNode, 0));
+        dist[sourceNode] = 0;
+        parent[sourceNode] = -1; // Set parent of source node to -1
+
+        while (!queue.isEmpty()) {
+            Vertex currentNode = queue.poll();
+            int u = currentNode.node;
+
+            if (u == sinkNode) {
+                // Path from source to sink exists
+                return true;
+            }
+
+            for (int v = 0; v < graph.length; v++) {  // Use graph.length instead of V
+                if (graph[u][v] > 0) {
+                    int newDistance = dist[u] + 1;
+
+                    if (newDistance < dist[v]) {
+                        dist[v] = newDistance;
+                        queue.add(new Vertex(v, newDistance));
+                        parent[v] = u; // Update the parent of vertex v
+                    }
+                }
+            }
+        }
+
+        // No path from source to sink
+        return false;
+    }
+
+    public static boolean dijkstra_DFS(int[][] graph, int sourceNode, int sinkNode, int[] parent) {
+        int V = graph.length;
+        int[] dist = new int[V];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+
+        PriorityQueue<Vertex> queue = new PriorityQueue<>();
+        queue.add(new Vertex(sourceNode, 0));
+        dist[sourceNode] = 0;
+        int decreasingCounter = 0;
+
+        boolean pathExists = false;
+
+        while (!queue.isEmpty()) {
+            Vertex currentNode = queue.poll();
+            int u = currentNode.node;
+
+            if (u == sinkNode) {
+                // Path from source to sink exists
+                pathExists = true;
+                break;
+            }
+
+            for (int v = 0; v < V; v++) {
+                if (graph[u][v] > 0 && dist[v] == Integer.MAX_VALUE) {
+                    decreasingCounter--;
+                    dist[v] = decreasingCounter;
+                    queue.add(new Vertex(v, decreasingCounter));
+                    parent[v] = u; // Update the parent of vertex v
+                }
+            }
+        }
+
+        return pathExists;
+    }
+
+    public static boolean dijkstra_RandomDFS(int[][] graph, int sourceNode, int sinkNode, int[] parent) {
+        int V = graph.length;
+        int[] dist = new int[V];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+
+        PriorityQueue<Vertex> queue = new PriorityQueue<>();
+        queue.add(new Vertex(sourceNode, 0));
+        dist[sourceNode] = 0;
+
+        boolean pathExists = false;
+
+        while (!queue.isEmpty()) {
+            Vertex currentNode = queue.poll();
+            int u = currentNode.node;
+
+            if (u == sinkNode) {
+                // Path from source to sink exists
+                pathExists = true;
+                break;
+            }
+
+            for (int v = 0; v < V; v++) {
+                if (graph[u][v] > 0 && dist[v] == Integer.MAX_VALUE) {
+                    int distance = new Random().nextInt();
+                    dist[v] = distance;
+                    queue.add(new Vertex(v, distance));
+                    parent[v] = u; // Update the parent of vertex v
+                }
+            }
+        }
+
+        return pathExists;
+    }
+
+    public static boolean dijkstra_MaxCapacity(int[][] graph, int sourceNode, int sinkNode, int[] parent) {
+        int V = graph.length;
+        int[] dist = new int[V];
+        Arrays.fill(dist, Integer.MIN_VALUE);
+        dist[sourceNode] = Integer.MAX_VALUE; // Initialize source with maximum capacity
+
+        PriorityQueue<Vertex> priorityQueue = new PriorityQueue<>(Comparator.comparingInt(node -> node.distance));
+        priorityQueue.add(new Vertex(sourceNode, Integer.MAX_VALUE));
+
+        boolean pathExists = false;
+
+        while (!priorityQueue.isEmpty()) {
+            int u = priorityQueue.poll().node;
+
+            if (u == sinkNode) {
+                // Path from source to sink exists
+                pathExists = true;
+                break;
+            }
+
+            for (int v = 0; v < V; v++) {
+                if (graph[u][v] > 0) {
+                    int edgeCapacity = graph[u][v];
+
+                    int minCapacity = Math.min(dist[u], edgeCapacity);
+
+                    if (minCapacity > dist[v]) {
+                        dist[v] = minCapacity;
+                        priorityQueue.add(new Vertex(v, dist[v]));
+                        parent[v] = u; // Update the parent of vertex v
+                    }
+                }
+            }
+        }
+
+
+        return pathExists;
+    }
+
 
 
     public static void main(String[] args){
@@ -333,5 +476,19 @@ public class Ford_Fulkerson {
         System.out.printf("%-10s|%5d|%5.1f|%10d|%7d|%5.1f|%20.15f|%12d\n", algorithm, n, r, upperCap, paths, ml, mpl, totalEdges);
     }
 
+    private static class Vertex implements Comparable<Vertex> {
+        private int node;
+        private int distance;
+
+        public Vertex(int vertex, int distance) {
+            this.node = vertex;
+            this.distance = distance;
+        }
+
+        @Override
+        public int compareTo(Vertex other) {
+            return Integer.compare(this.distance, other.distance);
+        }
+    }
 
 }
