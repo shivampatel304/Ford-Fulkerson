@@ -1,0 +1,337 @@
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.LinkedList;
+
+public class Ford_Fulkerson {
+
+    static int V = 0,E=0;
+    static int graph[][];
+
+    static int sinkNode,sourceNode;
+
+    static int N, upperCap;
+    static float r;
+
+
+    public void read_data_from_csv() {
+        String csvFile = "source_sink_graph.csv";
+
+        try(BufferedReader br = new BufferedReader(new FileReader(csvFile))){
+            String[] values = br.readLine().split(",");
+            int n = Integer.parseInt(values[1].trim());
+            V = Integer.parseInt(values[0].trim());
+            E = Integer.parseInt(values[1].trim());
+            graph = new int[V][V];
+            for(int i=0; i<n; i++){
+                values = br.readLine().split(",");
+                graph[Integer.parseInt(values[0].trim())][Integer.parseInt(values[3].trim())]= Integer.parseInt(values[6].trim());
+            }
+            values = br.readLine().split(",");
+            sourceNode = Integer.parseInt(values[0].trim());
+            sinkNode = Integer.parseInt(values[1].trim());
+            values = br.readLine().split(",");
+            N = Integer.parseInt(values[0].trim());
+            r = Float.parseFloat(values[1].trim());
+            upperCap = Integer.parseInt(values[2].trim());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static int fordFulkerson(int graph[][], int s, int t){
+        int u,v;
+
+        int rGraph[][] = new int[V][V];
+
+        for(u=0;u<V;u++){
+            for(v=0;v<V;v++){
+                rGraph[u][v] = graph[u][v];
+            }
+        }
+
+        int parent[] = new int[V];
+
+        int max_flow = 0;
+
+        while(bfs(rGraph,s,t,parent)){
+            int path_flow = Integer.MAX_VALUE;
+            for(v=t; v!=s; v = parent[v]){
+                u = parent[v];
+                path_flow = Math.min(path_flow, rGraph[u][v]);
+            }
+
+            for(v = t; v != s; v=parent[v]){
+                u = parent[v];
+                rGraph[u][v] -= path_flow;
+                rGraph[v][u] += path_flow;
+            }
+
+            max_flow += path_flow;
+        }
+        return max_flow;
+    }
+
+    private static int fordFulkerson_SAP(int graph[][], int s, int t){
+        int u,v;
+
+        int rGraph[][] = new int[V][V];
+
+        for(u=0;u<V;u++){
+            for(v=0;v<V;v++){
+                rGraph[u][v] = graph[u][v];
+            }
+        }
+
+        int parent[] = new int[V];
+
+        int max_flow = 0;
+
+        int paths = 0;
+        int totalPathLength = 0;
+        int maxLength = -1;
+
+        while(SAP.dijkstra_SAP(rGraph,s,t,parent)){
+            int pathLength = 0;
+            int path_flow = Integer.MAX_VALUE;
+            for(v=t; v!=s; v = parent[v]){
+                u = parent[v];
+                path_flow = Math.min(path_flow, rGraph[u][v]);
+                pathLength++;
+            }
+
+            if(pathLength > maxLength){
+                maxLength = pathLength;
+            }
+
+            for(v = t; v != s; v=parent[v]){
+                u = parent[v];
+                rGraph[u][v] -= path_flow;
+                rGraph[v][u] += path_flow;
+            }
+
+            max_flow += path_flow;
+            totalPathLength += pathLength;
+            paths++;
+        }
+
+        double meanLength = (double) totalPathLength / paths;
+        double meanProportionalLength = (double) meanLength / maxLength;
+
+        printTableEntry("SAP", N, r, upperCap, paths, meanLength, meanProportionalLength, E);
+
+        return max_flow;
+    }
+
+    private static int fordFulkerson_DFS(int graph[][], int s, int t){
+        int u,v;
+
+        int rGraph[][] = new int[V][V];
+
+        for(u=0;u<V;u++){
+            for(v=0;v<V;v++){
+                rGraph[u][v] = graph[u][v];
+            }
+        }
+
+        int parent[] = new int[V];
+
+        int max_flow = 0;
+
+        int paths = 0;
+        int totalPathLength = 0;
+        int maxLength = -1;
+
+        while(DFS_Like.dijkstra_DFS(rGraph,s,t,parent)){
+            int pathLength = 0;
+            int path_flow = Integer.MAX_VALUE;
+            for(v=t; v!=s; v = parent[v]){
+                u = parent[v];
+                path_flow = Math.min(path_flow, rGraph[u][v]);
+                pathLength++;
+            }
+
+            if(pathLength > maxLength){
+                maxLength = pathLength;
+            }
+
+            for(v = t; v != s; v=parent[v]){
+                u = parent[v];
+                rGraph[u][v] -= path_flow;
+                rGraph[v][u] += path_flow;
+            }
+
+            max_flow += path_flow;
+            totalPathLength += pathLength;
+            paths++;
+        }
+
+        double meanLength = (double) totalPathLength / paths;
+        double meanProportionalLength = (double) meanLength / maxLength;
+
+        printTableEntry("DFS-Like", N, r, upperCap, paths, meanLength, meanProportionalLength, E);
+        return max_flow;
+    }
+
+    private static int fordFulkerson_RandomDFS(int graph[][], int s, int t){
+        int u,v;
+
+        int rGraph[][] = new int[V][V];
+
+        for(u=0;u<V;u++){
+            for(v=0;v<V;v++){
+                rGraph[u][v] = graph[u][v];
+            }
+        }
+
+        int parent[] = new int[V];
+
+        int max_flow = 0;
+
+        int paths = 0;
+        int totalPathLength = 0;
+        int maxLength = -1;
+
+        while(RandomDFS.dijkstra_RandomDFS(rGraph,s,t,parent)){
+            int pathLength = 0;
+            int path_flow = Integer.MAX_VALUE;
+            for(v=t; v!=s; v = parent[v]){
+                u = parent[v];
+                path_flow = Math.min(path_flow, rGraph[u][v]);
+                pathLength++;
+            }
+
+            if(pathLength > maxLength){
+                maxLength = pathLength;
+            }
+
+            for(v = t; v != s; v=parent[v]){
+                u = parent[v];
+                rGraph[u][v] -= path_flow;
+                rGraph[v][u] += path_flow;
+            }
+
+            max_flow += path_flow;
+            totalPathLength += pathLength;
+            paths++;
+        }
+
+        double meanLength = (double) totalPathLength / paths;
+        double meanProportionalLength = (double) meanLength / maxLength;
+
+        printTableEntry("Random DFS", N, r, upperCap, paths, meanLength, meanProportionalLength, E);
+        return max_flow;
+    }
+
+    private static int fordFulkerson_MaxCap(int graph[][], int s, int t){
+        int u,v;
+
+        int rGraph[][] = new int[V][V];
+
+        for(u=0;u<V;u++){
+            for(v=0;v<V;v++){
+                rGraph[u][v] = graph[u][v];
+            }
+        }
+
+        int parent[] = new int[V];
+
+        int max_flow = 0;
+
+        int paths = 0;
+        int totalPathLength = 0;
+        int maxLength = -1;
+
+        while(MaxCapacityDijkstra.dijkstra_MaxCapacity(rGraph,s,t,parent)){
+            int pathLength = 0;
+            int path_flow = Integer.MAX_VALUE;
+            for(v=t; v!=s; v = parent[v]){
+                u = parent[v];
+                path_flow = Math.min(path_flow, rGraph[u][v]);
+                pathLength++;
+            }
+
+            if(pathLength > maxLength){
+                maxLength = pathLength;
+            }
+
+            for(v = t; v != s; v=parent[v]){
+                u = parent[v];
+                rGraph[u][v] -= path_flow;
+                rGraph[v][u] += path_flow;
+            }
+
+            max_flow += path_flow;
+            totalPathLength += pathLength;
+            paths++;
+        }
+
+        double meanLength = (double) totalPathLength / paths;
+        double meanProportionalLength = (double) meanLength / maxLength;
+
+        printTableEntry("Max Cap", N, r, upperCap, paths, meanLength, meanProportionalLength, E);
+        return max_flow;
+    }
+
+    static boolean bfs(int rGraph[][], int s, int t, int parent[]) {
+        // Create a visited array and mark all vertices as not visited
+        boolean visited[] = new boolean[V];
+        for (int i = 0; i < V; ++i)
+            visited[i] = false;
+
+        // Create a queue, enqueue source vertex and mark source vertex as visited
+        LinkedList<Integer> queue = new LinkedList<Integer>();
+        queue.add(s);
+        visited[s] = true;
+        parent[s] = -1;
+
+        // Standard BFS Loop
+        while (queue.size() != 0) {
+            int u = queue.poll();
+
+            for (int v = 0; v < V; v++) {
+                if (!visited[v] && rGraph[u][v] > 0) {
+                    // If we find a connection to the sink node, then there is no point in BFS anymore
+                    // We just have to set its parent and can return true
+                    if (v == t) {
+                        parent[v] = u;
+                        return true;
+                    }
+                    queue.add(v);
+                    parent[v] = u;
+                    visited[v] = true;
+                }
+            }
+        }
+
+        // We didn't reach the sink
+        return false;
+    }
+
+
+
+    public static void main(String[] args){
+        new Ford_Fulkerson().read_data_from_csv();
+      //  System.out.println(fordFulkerson(graph,sourceNode,sinkNode));
+
+       // System.out.println("Shortest Augmenting Path : ");
+
+        System.out.println("Algorithm | n   | r   | upperCap | paths | ML  | MPL                 | total edges");
+        System.out.println("----------|-----|-----|----------|-------|-----|---------------------|------------");
+
+        fordFulkerson_SAP(graph, sourceNode, sinkNode);
+        fordFulkerson_DFS(graph, sourceNode, sinkNode);
+        fordFulkerson_RandomDFS(graph, sourceNode, sinkNode);
+        fordFulkerson_MaxCap(graph, sourceNode, sinkNode);
+
+    }
+
+    private static void printTableEntry(String algorithm, int n, float r, int upperCap, int paths, double ml, double mpl, int totalEdges) {
+        System.out.printf("%-10s|%5d|%5.1f|%10d|%7d|%5.1f|%20.15f|%12d\n", algorithm, n, r, upperCap, paths, ml, mpl, totalEdges);
+    }
+
+
+}
